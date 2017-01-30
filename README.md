@@ -22,21 +22,21 @@ where <b>_ASN_</b> is the Autonomic System Numer we must provide, for instance 1
 Valid <b>_ASN_</b> ranges are 1-23455, 23457-64495 and 131072-397212.
 
 <b>Examples</b><br/>
-- <a href="/asn/2906/" target="_blank">Report about Netflix</a>
-- <a href="/asn/15169/" target="_blank">Report about Google</a>
-- <a href="/asn/714/" target="_blank">Report about Apple</a>
-- <a href="/asn/46489/" target="_blank">Report about Twitch</a>
-- <a href="/asn/23286/" target="_blank">Report about Hulu</a>
-- <a href="/asn/32934/" target="_blank">Report about Facebook</a>
-- <a href="/asn/32590/" target="_blank">Report about Valve</a>
-- <a href="/asn/16509/" target="_blank">Report about Amazon</a>
-- <a href="/asn/8075/" target="_blank">Report about Microsoft</a>
-- <a href="/asn/20940/" target="_blank">Report about Akamai</a>
-- <a href="/asn/13335/" target="_blank">Report about CloudFlare</a>
-- <a href="/asn/2914/" target="_blank">Report about NTT</a>
-- <a href="/asn/3356/" target="_blank">Report about Level 3</a>
-- <a href="/asn/286/" target="_blank">Report about KPN</a>
-- <a href="/asn/6939/" target="_blank">Report about Hurricane Electric</a>
+- <a href="https://pdb.gixtools.net/asn/2906/" target="_blank">Report about Netflix</a>
+- <a href="https://pdb.gixtools.net/asn/15169/" target="_blank">Report about Google</a>
+- <a href="https://pdb.gixtools.net/asn/714/" target="_blank">Report about Apple</a>
+- <a href="https://pdb.gixtools.net/asn/46489/" target="_blank">Report about Twitch</a>
+- <a href="https://pdb.gixtools.net/asn/23286/" target="_blank">Report about Hulu</a>
+- <a href="https://pdb.gixtools.net/asn/32934/" target="_blank">Report about Facebook</a>
+- <a href="https://pdb.gixtools.net/asn/32590/" target="_blank">Report about Valve</a>
+- <a href="https://pdb.gixtools.net/asn/16509/" target="_blank">Report about Amazon</a>
+- <a href="https://pdb.gixtools.net/asn/8075/" target="_blank">Report about Microsoft</a>
+- <a href="https://pdb.gixtools.net/asn/20940/" target="_blank">Report about Akamai</a>
+- <a href="https://pdb.gixtools.net/asn/13335/" target="_blank">Report about CloudFlare</a>
+- <a href="https://pdb.gixtools.net/asn/2914/" target="_blank">Report about NTT</a>
+- <a href="https://pdb.gixtools.net/asn/3356/" target="_blank">Report about Level 3</a>
+- <a href="https://pdb.gixtools.net/asn/286/" target="_blank">Report about KPN</a>
+- <a href="https://pdb.gixtools.net/asn/6939/" target="_blank">Report about Hurricane Electric</a>
 
 <b>Requirements</b><br/>
 - No OS specific features are used, code is developed and tested on Ubuntu 16.04.1 LTS (xenial)
