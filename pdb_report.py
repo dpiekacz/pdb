@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-pdb_get_info.py
+pdb_report.py
 Created by Daniel Piekacz on 2017-01-25.
 Updated on 2017-01-30.
 https://gixtools.net

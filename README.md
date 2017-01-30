@@ -2,12 +2,12 @@ PeeringDB Report Generator
 ==========================
 <b>Description</b><br/>
 The tool utilizes <a href="https://peeringdb.com/apidocs/" target="_blank">PeeringDB API</a> to collect and analize details about requested ASN.
-The generated report includes:</p>
+The generated report includes:
 - Total number of peering points.
 - Total number of unique IXP operators/organizations.
 - Total aggregated public peering capacity.
 - Percentage of IPv4 and IPv6 enabled peering points.
-- List of public peering points grouped by IXP name. Added and Updated columns will be highlighted when have changed in the last {{ days }} days.
+- List of public peering points grouped by IXP name. Added and Updated columns will be highlighted when have changed in the last 60 days.
 - Per IXP percentage of NSP/ISP, CDN, Enterprise and other participants (grouped by ASN).
 - Per IXP total connected NSP/ISP, CDN, Enterprise and other participants capacity.
 - World map with location and number of peering points.
