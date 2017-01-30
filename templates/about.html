@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <link rel="shortcut icon" href="/static/favicon.ico">
+    <title>PeeringDB Report Generator</title>
+  </head>
+  <body>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <div class="container" style="width:80%;">
+     <h1 style="text-align:left;">PeeringDB Report Generator</h1>
+     <p style="font-size:100%;text-align:left;">
+        <b>Description</b><br/>
+        The tool utilizes <a href="https://peeringdb.com/apidocs/" target="_blank">PeeringDB API</a> to collect and analize details about requested ASN.<br/>
+        The generated report includes:</p>
+        <ul>
+        <li>Total number of peering points.</li>
+        <li>Total number of unique IXP operators/organizations.</li>
+        <li>Total aggregated public peering capacity.</li>
+        <li>Percentage of IPv4 and IPv6 enabled peering points.</li>
+        <li>List of public peering points grouped by IXP name. Added and Updated columns will be highlighted when have changed in the last {{ days }} days.</li>
+        <li>Per IXP percentage of NSP/ISP, CDN, Enterprise and other participants (grouped by ASN).</li>
+        <li>Per IXP total connected NSP/ISP, CDN, Enterprise and other participants capacity.</li>
+        <li>World map with location and number of peering points.</li>
+        <li>World map with total capacity of peering points.</li>
+        </ul>
+      <p style="font-size:100%;text-align:left;">
+        <b>Roadmap</b><br/>
+        <ul>
+        <li>Per IXP percentage, network type, total capacity and list of ASNs that do not peer at other IXPs.</li>
+        </ul>
+     <p style="font-size:100%;text-align:left;">
+        <b>Usage</b><br/>
+        https://pdb.gixtools.net/asn/<b>_ASN_</b>/<br/>
+        where <b>_ASN_</b> is the Autonomic System Numer we must provide, for instance 15169 (Google)<br/>
+        Valid <b>_ASN_</b> ranges are 1-23455, 23457-64495 and 131072-397212.
+     </p>
+     <p style="font-size:100%;text-align:left;">
+        <b>Examples</b><br/>
+        <a href="/asn/2906/" target="_blank">Report about Netflix</a><br/>
+        <a href="/asn/15169/" target="_blank">Report about Google</a><br/>
+        <a href="/asn/714/" target="_blank">Report about Apple</a><br/>
+        <a href="/asn/46489/" target="_blank">Report about Twitch</a><br/>
+        <a href="/asn/23286/" target="_blank">Report about Hulu</a><br/>
+        <a href="/asn/32934/" target="_blank">Report about Facebook</a><br/>
+        <a href="/asn/32590/" target="_blank">Report about Valve</a><br/>
+        <a href="/asn/16509/" target="_blank">Report about Amazon</a><br/>
+        <a href="/asn/8075/" target="_blank">Report about Microsoft</a><br/>
+        <a href="/asn/20940/" target="_blank">Report about Akamai</a><br/>
+        <a href="/asn/13335/" target="_blank">Report about CloudFlare</a><br/>
+        <a href="/asn/2914/" target="_blank">Report about NTT</a><br/>
+        <a href="/asn/3356/" target="_blank">Report about Level 3</a><br/>
+        <a href="/asn/286/" target="_blank">Report about KPN</a><br/>
+        <a href="/asn/6939/" target="_blank">Report about Hurricane Electric</a><br/>
+     </p>
+     <p style="font-size:100%;text-align:left;">
+        <b>Requirements</b>
+     </p>
+        <ul>
+        <li>No OS specific features are used, code is developed and tested on Ubuntu 16.04.1 LTS (xenial)</li>
+        <li>Python 2.x, tested with 2.7.12</li>
+        <li>Python libraries:
+            <ul>
+            <li>redis</li>
+            <li>peeringdb</li>
+            <li>flask</li>
+            <li>pygal</li>
+            <li>pygal_maps_world</li>
+            </ul>
+        </li>
+        <li>Redis DB, tested with 3.0.6</li>
+        </ul>
+    </div>
+  </body>
+</html>

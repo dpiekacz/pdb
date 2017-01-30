@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <link rel="shortcut icon" href="/static/favicon.ico">
+    <title>PeeringDB Report Generator - ASN {{ asn }} - {{ asn_name }}</title>
+  </head>
+  <body>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+<div class="container" style="width:100%;">
+    <h1 style="text-align:center;">Report for ASN {{ asn }} - {{ asn_name }}</h1>
+</div>
+<div class="container" style="width:100%;">
+    <h2 style="text-align:center;">Total number of peering links<br/><span class="label label-default">{{ total_peering }}</span></h2>
+    <h2 style="text-align:center;">Total number of unique IXP operators<br/><span class="label label-default">{{ total_unique_org }}</span></h2>
+    <h2 style="text-align:center;">Total aggregated peering capacity<br/><span class="label label-default">{{ total_capacity_gb }} / {{ total_capacity_tb }}</span></h2>
+</div>
+<div id="peering_v46" class="container" style="width:100%;text-align:center;">
+    <h2 style="text-align:center;">Percentage of IPv4 and IPv6 peering</h2>
+    <embed width="800" type="image/svg+xml" src="{{ peering_v46|safe }}">
+</div>
+<div class="container" style="width:100%;">
+<table style="width:100%;" class="table table-striped">
+  <thead>
+  <tr>
+    <th colspan="2"><p style="font-size:150%;text-align:center;">Public peering grouped by IXP name</p><p style="text-align:center;">Added and Updated columns will be highlighted when have changed in the last {{ days }} days.</p></th>
+  </tr>
+  </thead>
+
+  <tbody>
+  {% for ixp in peering %}
+    <tr>
+      <td style="width:10%;">{{ ixp[0] }}</td>
+      <td style="width:90%;">
+
+    <table style="width:100%;" class="table table-striped">
+     <thead>
+     <tr>
+      <th style="width:10%;">Speed</th>
+      <th style="width:10%;">Route Server</th>
+      <th style="width:20%;">IPv4 address</th>
+      <th style="width:20%;">IPv6 address</th>
+      <th style="width:20%;">Added</th>
+      <th style="width:20%;">Updated</th>
+     </tr>
+     </thead>
+     <tbody>
+     {% for peering in ixp[1] %}
+     <tr>
+      <td>{{ ixp[1][peering].speed }} Mb</td>
+      <td>{{ ixp[1][peering].rs }}</td>
+      <td>{{ ixp[1][peering].ip4 }}</td>
+      <td>{{ ixp[1][peering].ip6 }}</td>
+      <td {% if ixp[1][peering].created_warn %}class="warning"{% endif %}>{{ ixp[1][peering].created }}</td>
+      <td {% if ixp[1][peering].updated_warn %}class="info"{% endif %}>{{ ixp[1][peering].updated }}</td>
+     </tr>
+     {% endfor %}
+     </tbody>
+     </table>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+<div class="container" style="width:100%;">
+  {% for ixp in peering %}
+    <embed width="920" type="image/svg+xml" src="/static/ixlan_{{ ixlan[ixp[0]] }}_number.svg">
+    <embed width="920" type="image/svg+xml" src="/static/ixlan_{{ ixlan[ixp[0]] }}_capacity.svg">
+  {% endfor %}
+</div>
+<div id="map_number" class="container" style="width:100%;">
+    <embed width="1840" type="image/svg+xml" src="{{ map_number|safe }}">
+</div>
+<div id="map_capacity" class="container" style="width:100%;">
+    <embed width="1840" type="image/svg+xml" src="{{ map_capacity|safe }}">
+</div>
+     <p style="font-size:150%;text-align:center;"><a href="/">Back to Homepage</a></p>
+  </body>
+</html>
