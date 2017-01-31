@@ -68,14 +68,16 @@ def pdb_report(asn):
     # Searching for ASN in the local db
     asn_info = rdb.get('as_' + str(asn))
     if not asn_info:
+        # ASN not found
         if config['debug']:
             tst = datetime.datetime.now().strftime(config['timestamp_format'])
-            rdb.lpush('pdb_log', tst + ' > ASN %s not found in DB' % (asn))
-            rdb.lpush('pdb_log', tst + ' > Quering PeeringDB for ASN %s' % (asn))
-            print tst + ' > ASN %s not found in DB' % (asn)
-            print tst + ' > Quering PeeringDB for ASN %s' % (asn)
+            rdb.lpush('pdb_log', '%s > ASN %s not found in DB' % (tst, asn))
+            rdb.lpush('pdb_log', '%s > Quering PeeringDB for ASN %s' % (tst, asn))
+            print '%s > ASN %s not found in DB' % (tst, asn)
+            print '%s > Quering PeeringDB for ASN %s' % (tst, asn)
 
         try:
+            # Quering PeeringDB for the ASN
             pdb_resp = pdb.all('net', asn=asn, depth=2)
             if not pdb_resp:
                 return render_template('error.html', error='No entry in PeeringDB for ASN ' + str(asn), message='That AS operator has not published details yet :(')
@@ -87,23 +89,27 @@ def pdb_report(asn):
             rdb.set('as_' + str(asn), json.dumps(asn_info))
 
     else:
+        # ASN is cached
         asn_info = json.loads(asn_info)
         if config['debug']:
             tst = datetime.datetime.now().strftime(config['timestamp_format'])
-            rdb.lpush('pdb_log', tst + ' > ASN %s is cached' % (asn))
-            print tst + ' > ASN %s is cached' % (asn)
+            rdb.lpush('pdb_log', '%s > ASN %s is cached' % (tst, asn))
+            print '%s > ASN %s is cached' % (tst, asn)
 
     if config['debug']:
         tst = datetime.datetime.now().strftime(config['timestamp_format'])
-        rdb.lpush('pdb_log', tst + ' > %s - ASN %s' % (asn_info['name'], asn_info['asn']))
-        print tst + ' > %s - ASN %s\n' % (asn_info['name'], asn_info['asn'])
+        rdb.lpush('pdb_log', '%s > %s - ASN %s' % (tst, asn_info['name'], asn_info['asn']))
+        print '%s > %s - ASN %s\n' % (tst, asn_info['name'], asn_info['asn'])
 
     # Total number of peering points
     total_peering = len(asn_info['netixlan_set'])
 
+    # Walking through all IXLANs the ASN is connected to
     for peering in asn_info['netixlan_set']:
         # Total aggregated capacity
         total_capacity += peering['speed']
+
+        # Counting IPv4 and IPv6 peering's
         if peering['ipaddr4']:
             total_peering_v4 += 1
         if peering['ipaddr6']:
@@ -112,52 +118,62 @@ def pdb_report(asn):
         # Searching for IX in the local db
         ix_info = rdb.get('ix_' + str(peering['ix_id']))
         if not ix_info:
+            # IX not found
             if config['debug']:
                 tst = datetime.datetime.now().strftime(config['timestamp_format'])
-                rdb.lpush('pdb_log', tst + ' > IX ID %s not found in DB' % (peering['ix_id']))
-                rdb.lpush('pdb_log', tst + ' > Quering PeeringDB for IX ID %s' % (peering['ix_id']))
-                print tst + ' > IX ID %s not found in DB' % (peering['ix_id'])
-                print tst + ' > Quering PeeringDB for IX ID %s' % (peering['ix_id'])
+                rdb.lpush('pdb_log', '%s > IX ID %s not found in DB' % (tst, peering['ix_id']))
+                rdb.lpush('pdb_log', '%s > Quering PeeringDB for IX ID %s' % (tst, peering['ix_id']))
+                print '%s > IX ID %s not found in DB' % (tst, peering['ix_id'])
+                print '%s > Quering PeeringDB for IX ID %s' % (tst, peering['ix_id'])
 
+            # Quering PeeringDB for IX
             ix_info = pdb.all('ix', id=peering['ix_id'], depth=2)[0]
             rdb.set('ix_' + str(peering['ix_id']), json.dumps(ix_info))
         else:
+            # IX is cached
             ix_info = json.loads(ix_info)
             if config['debug']:
                 tst = datetime.datetime.now().strftime(config['timestamp_format'])
-                rdb.lpush('pdb_log', tst + ' > IX %s is cached' % (peering['ix_id']))
-                print tst + ' > IX %s is cached' % (peering['ix_id'])
+                rdb.lpush('pdb_log', '%s > IX %s is cached' % (tst, peering['ix_id']))
+                print '%s > IX %s is cached' % (tst, peering['ix_id'])
 
+        # Generating stats for IXLAN
         if peering['ixlan_id'] in peering_ixlan:
+            # Stats already generated
             if config['debug']:
                 tst = datetime.datetime.now().strftime(config['timestamp_format'])
-                rdb.lpush('pdb_log', tst + ' > Stats ready for IXLAN ' + str(peering['ixlan_id']))
-                print tst + ' > Stats ready for IXLAN ' + str(peering['ixlan_id'])
+                rdb.lpush('pdb_log', '%s > Stats ready for IXLAN %s' % (tst, peering['ixlan_id']))
+                print '%s > Stats ready for IXLAN %s' % (tst, peering['ixlan_id'])
         else:
+            # Stats not found
             # Searching for IXLAN in the local db
             ixlan_info = rdb.get('ixlan_' + str(peering['ixlan_id']))
             if not ixlan_info:
+                # IXLAN not found
                 if config['debug']:
                     tst = datetime.datetime.now().strftime(config['timestamp_format'])
-                    rdb.lpush('pdb_log', tst + ' > IXLAN ID %s not found in DB' % (peering['ixlan_id']))
-                    rdb.lpush('pdb_log', tst + ' > Quering PeeringDB for IXLAN ID %s' % (peering['ixlan_id']))
-                    print tst + ' > IXLAN ID %s not found in DB' % (peering['ixlan_id'])
-                    print tst + ' > Quering PeeringDB for IXLAN ID %s' % (peering['ixlan_id'])
+                    rdb.lpush('pdb_log', '%s > IXLAN ID %s not found in DB' % (tst, peering['ixlan_id']))
+                    rdb.lpush('pdb_log', '%s > Quering PeeringDB for IXLAN ID %s' % (tst, peering['ixlan_id']))
+                    print '%s > IXLAN ID %s not found in DB' % (tst, peering['ixlan_id'])
+                    print '%s > Quering PeeringDB for IXLAN ID %s' % (tst, peering['ixlan_id'])
 
+                # Quering PeeringDB for IXLAN
                 ixlan_info = pdb.all('ixlan', id=peering['ixlan_id'], depth=2)[0]
                 rdb.set('ixlan_' + str(peering['ixlan_id']), json.dumps(ixlan_info))
             else:
+                # IXLAN is cached
                 ixlan_info = json.loads(ixlan_info)
                 if config['debug']:
                     tst = datetime.datetime.now().strftime(config['timestamp_format'])
-                    rdb.lpush('pdb_log', tst + ' > IXLAN %s is cached' % (peering['ixlan_id']))
-                    print tst + ' > IXLAN %s is cached' % (peering['ixlan_id'])
+                    rdb.lpush('pdb_log', '%s > IXLAN %s is cached' % (tst, peering['ixlan_id']))
+                    print '%s > IXLAN %s is cached' % (tst, peering['ixlan_id'])
 
             if config['debug']:
                 tst = datetime.datetime.now().strftime(config['timestamp_format'])
-                rdb.lpush('pdb_log', tst + ' > Generating stats for IXLAN ' + str(peering['ixlan_id']))
-                print tst + ' > Generating stats for IXLAN ' + str(peering['ixlan_id'])
+                rdb.lpush('pdb_log', '%s > Generating stats for IXLAN %s' % (tst, peering['ixlan_id']))
+                print '%s > Generating stats for IXLAN %s' % (tst, peering['ixlan_id'])
 
+            # Counting IXLAN members' types and connected capacity
             peering_ixlan[peering['ixlan_id']] = {}
             peering_ixlan[peering['ixlan_id']]['name'] = peering['name']
             peering_ixlan[peering['ixlan_id']]['peer_transit_access'] = 0
@@ -169,8 +185,10 @@ def pdb_report(asn):
             peering_ixlan[peering['ixlan_id']]['capacity_enterprise'] = 0
             peering_ixlan[peering['ixlan_id']]['capacity_other'] = 0
 
+            # Walking through all members connected to IXP network (we need those details to see speed of each peering)
             isp_list = {}
             for isp in ixlan_info['net_set']:
+                # Counting IXLAN members only once. PeeringDB returns members ID many time depends on number of peering links.
                 if isp['asn'] not in isp_list:
                     if isp['info_type'] == 'NSP':
                         peering_ixlan[peering['ixlan_id']]['peer_transit_access'] += 1
@@ -183,24 +201,29 @@ def pdb_report(asn):
                     else:
                         peering_ixlan[peering['ixlan_id']]['peer_other'] += 1
 
+                    # Quering local cache for ASN
                     isp_info = rdb.get('as_' + str(isp['asn']))
                     if not isp_info:
+                        # ASN not found
                         if config['debug']:
                             tst = datetime.datetime.now().strftime(config['timestamp_format'])
-                            rdb.lpush('pdb_log', tst + ' > ASN %s not found in DB' % (isp['asn']))
-                            rdb.lpush('pdb_log', tst + ' > Quering PeeringDB for ASN %s' % (isp['asn']))
-                            print tst + ' > ASN %s not found in DB' % (isp['asn'])
-                            print tst + ' > Quering PeeringDB for ASN %s' % (isp['asn'])
+                            rdb.lpush('pdb_log', '%s > ASN %s not found in DB' % (tst, isp['asn']))
+                            rdb.lpush('pdb_log', '%s > Quering PeeringDB for ASN %s' % (tst, isp['asn']))
+                            print '%s > ASN %s not found in DB' % (tst, isp['asn'])
+                            print '%s > Quering PeeringDB for ASN %s' % (tst, isp['asn'])
 
+                        # Quering PeeringDB for ASN
                         isp_info = pdb.all('net', asn=isp['asn'], depth=2)[0]
                         rdb.set('as_' + str(isp['asn']), json.dumps(isp_info))
                     else:
+                        # ASN is cached
                         isp_info = json.loads(isp_info)
                         if config['debug']:
                             tst = datetime.datetime.now().strftime(config['timestamp_format'])
-                            rdb.lpush('pdb_log', tst + ' > ASN %s is cached' % (isp['asn']))
-                            print tst + ' > ASN %s is cached' % (isp['asn'])
+                            rdb.lpush('pdb_log', '%s > ASN %s is cached' % (tst, isp['asn']))
+                            print '%s > ASN %s is cached' % (tst, isp['asn'])
 
+                    # Accounting total capacity connected to IXLAN grouped by type of member
                     for isp_netixlan_info in isp_info['netixlan_set']:
                         if isp_netixlan_info['ixlan_id'] == peering['ixlan_id']:
                             if isp_info['info_type'] == 'NSP':
@@ -218,9 +241,10 @@ def pdb_report(asn):
 
             if config['debug']:
                 tst = datetime.datetime.now().strftime(config['timestamp_format'])
-                rdb.lpush('pdb_log', tst + ' > Accounting capacity of IXLAN %s completed' % (isp_netixlan_info['ixlan_id']))
-                print tst + ' > Accounting capacity of IXLAN %s completed' % (isp_netixlan_info['ixlan_id'])
+                rdb.lpush('pdb_log', '%s > Accounting capacity of IXLAN %s completed' % (tst, isp_netixlan_info['ixlan_id']))
+                print '%s > Accounting capacity of IXLAN %s completed' % (tst, isp_netixlan_info['ixlan_id'])
 
+        # Accounting numer of peering's and total connected capacity in each country
         if ix_info['country'].lower() in peering_map:
             peering_map[ix_info['country'].lower()] += 1
             peering_map_capacity[ix_info['country'].lower()] += peering['speed'] / 1000
@@ -228,27 +252,32 @@ def pdb_report(asn):
             peering_map[ix_info['country'].lower()] = 1
             peering_map_capacity[ix_info['country'].lower()] = peering['speed'] / 1000
 
+        # Couting unique IXP organizations/operators
         if ix_info['org_id'] in peering_org:
+            # IXP operator already counted
             if config['debug']:
                 tst = datetime.datetime.now().strftime(config['timestamp_format'])
-                rdb.lpush('pdb_log', tst + ' > IXP org ID %s already counted' % (ix_info['org_id']))
-                print tst + ' > IXP org ID %s already counted' % (ix_info['org_id'])
+                rdb.lpush('pdb_log', '%s > IXP org ID %s already counted' % (tst, ix_info['org_id']))
+                print '%s > IXP org ID %s already counted' % (tst, ix_info['org_id'])
         else:
+            # A new IXP operator
             if config['debug']:
                 tst = datetime.datetime.now().strftime(config['timestamp_format'])
-                rdb.lpush('pdb_log', tst + ' > IXP org ID %s not yet counted' % (ix_info['org_id']))
-                print tst + ' > IXP org ID %s not yet counted' % (ix_info['org_id'])
+                rdb.lpush('pdb_log', '%s > IXP org ID %s not yet counted' % (tst, ix_info['org_id']))
+                print '%s > IXP org ID %s not yet counted' % (tst, ix_info['org_id'])
 
             peering_org[ix_info['org_id']] = ix_info['name_long']
 
         if config['debug']:
             tst = datetime.datetime.now().strftime(config['timestamp_format'])
-            rdb.lpush('pdb_log', tst + ' > %s - %s - %s - %s' % (peering['name'], ix_info['name'], ix_info['org_id'], peering['speed']))
-            print tst + ' > %s - %s - %s - %s\n' % (peering['name'].encode('utf8'), ix_info['name'].encode('utf-8'), ix_info['org_id'], peering['speed'])
+            rdb.lpush('pdb_log', '%s > %s - %s - %s - %s' % (tst, peering['name'], ix_info['name'], ix_info['org_id'], peering['speed']))
+            print '%s > %s - %s - %s - %s\n' % (tst, peering['name'].encode('utf8'), ix_info['name'].encode('utf-8'), ix_info['org_id'], peering['speed'])
 
+        # Creating new entry for each unique IXP name
         if peering['name'] not in peering_table:
             peering_table[peering['name']] = {}
 
+        # Calculating difference between current date and PeeringDB timestamps in days
         date_created = datetime.datetime.strptime(peering['created'][0:10], date_format)
         date_updated = datetime.datetime.strptime(peering['updated'][0:10], date_format)
         date_created_diff = abs((date_current - date_created).days)
@@ -273,6 +302,7 @@ def pdb_report(asn):
         else:
             peering_table[peering['name']][peering['id']]['ip6'] = 'N/A'
 
+        # Removing time from PeeringDB timestamps
         peering_table[peering['name']][peering['id']]['created'] = peering['created'][0:10]
         peering_table[peering['name']][peering['id']]['updated'] = peering['updated'][0:10]
         if date_created_diff <= config['days']:
@@ -286,17 +316,21 @@ def pdb_report(asn):
 
         ixlan_table[peering['name']] = peering['ixlan_id']
 
+    # Sort peering's table based on IXP name
     peering_table = sorted(peering_table.items(), key=operator.itemgetter(0))
 
+    # Generating charts for IXLANs
     for ix in peering_ixlan:
         if config['debug']:
             tst = datetime.datetime.now().strftime(config['timestamp_format'])
-            rdb.lpush('pdb_log', tst + ' > Generating network types chart for IXLAN %s' % (ix))
-            print tst + ' > Generating network types chart for IXLAN %s' % (ix)
+            rdb.lpush('pdb_log', '%s > Generating network types chart for IXLAN %s' % (tst, ix))
+            print '%s > Generating network types chart for IXLAN %s' % (tst, ix)
 
+        # Calculating total number of members and total connected by members capacity
         total_number_of_members = peering_ixlan[ix]['peer_transit_access'] + peering_ixlan[ix]['peer_content'] + peering_ixlan[ix]['peer_enterprise'] + peering_ixlan[ix]['peer_other']
         total_capacity_of_members = peering_ixlan[ix]['capacity_transit_access'] + peering_ixlan[ix]['capacity_content'] + peering_ixlan[ix]['capacity_enterprise'] + peering_ixlan[ix]['capacity_other']
 
+        # Generating chart showing number of members grouped by network type
         pie_chart_number_url = 'static/ixlan_' + str(ix) + '_number.svg'
         pie_chart_number = pygal.Bar()
         pie_chart_number.title = 'Network types at ' + peering_ixlan[ix]['name'] + ' [%]\n Total number of unique members: ' + str(total_number_of_members)
@@ -307,6 +341,7 @@ def pdb_report(asn):
         pie_chart_number.add('Other', 100 * peering_ixlan[ix]['peer_other'] / total_number_of_members)
         pie_chart_number.render_to_file(pie_chart_number_url)
 
+        # Generating chart showing total capacity grouped by network type
         pie_chart_capacity_url = 'static/ixlan_' + str(ix) + '_capacity.svg'
         pie_chart_capacity = pygal.Bar()
         pie_chart_capacity.value_formatter = capacity_gb_formatter
@@ -317,25 +352,26 @@ def pdb_report(asn):
         pie_chart_capacity.add('Other', peering_ixlan[ix]['capacity_other'] / 1000)
         pie_chart_capacity.render_to_file(pie_chart_capacity_url)
 
-    # Total number of unique organization peering
+    # Calculating total number of unique peering operators and total capacity in Gb & Tb
     total_unique_org = len(peering_org)
     total_capacity_gb = total_capacity / 1000
     total_capacity_tb = round(float(total_capacity) / (1000 * 1000), 2)
 
     if config['debug']:
         tst = datetime.datetime.now().strftime(config['timestamp_format'])
-        rdb.lpush('pdb_log', tst + ' > AS %s total number of peering points: %s' % (asn, total_peering))
-        rdb.lpush('pdb_log', tst + ' > AS %s total number of unique organization peering: %s' % (asn, total_unique_org))
-        rdb.lpush('pdb_log', tst + ' > AS %s total aggregated capacity: %s Gb' % (asn, total_capacity_gb))
-        print tst + ' > AS %s total number of peering points: %s' % (asn, total_peering)
-        print tst + ' > AS %s total number of unique organization peering: %s' % (asn, total_unique_org)
-        print tst + ' > AS %s total aggregated capacity: %s Gb' % (asn, total_capacity_gb)
+        rdb.lpush('pdb_log', '%s > AS %s total number of peering points: %s' % (tst, asn, total_peering))
+        rdb.lpush('pdb_log', '%s > AS %s total number of unique organization peering: %s' % (tst, asn, total_unique_org))
+        rdb.lpush('pdb_log', '%s > AS %s total aggregated capacity: %s Gb' % (tst, asn, total_capacity_gb))
+        print '%s > AS %s total number of peering points: %s' % (tst, asn, total_peering)
+        print '%s > AS %s total number of unique organization peering: %s' % (tst, asn, total_unique_org)
+        print '%s > AS %s total aggregated capacity: %s Gb' % (tst, asn, total_capacity_gb)
 
     if config['debug']:
         tst = datetime.datetime.now().strftime(config['timestamp_format'])
-        rdb.lpush('pdb_log', tst + ' > Generating world map for AS %s with number of peering locations' % (asn))
-        print tst + ' > Generating world map for AS %s with number of peering locations' % (asn)
+        rdb.lpush('pdb_log', '%s > Generating world map for AS %s with number of peering locations' % (tst, asn))
+        print '%s > Generating world map for AS %s with number of peering locations' % (tst, asn)
 
+    # Generating world map with number and location of peering's
     map_number_url = 'static/as' + asn + '_map_number.svg'
     map_number = pygal.maps.world.World()
     map_number.title = 'World map with number of peering locations'
@@ -344,9 +380,10 @@ def pdb_report(asn):
 
     if config['debug']:
         tst = datetime.datetime.now().strftime(config['timestamp_format'])
-        rdb.lpush('pdb_log', tst + ' > Generating world map for AS %s with total capacity' % (asn))
-        print tst + ' > Generating world map for AS %s with total capacity' % (asn)
+        rdb.lpush('pdb_log', '%s > Generating world map for AS %s with total capacity' % (tst, asn))
+        print '%s > Generating world map for AS %s with total capacity' % (tst, asn)
 
+    # Generating world map with total capacity of peering's
     map_capacity_url = 'static/as' + asn + '_map_capacity.svg'
     map_capacity = pygal.maps.world.World()
     map_capacity.title = 'World map with total capacity'
@@ -356,12 +393,15 @@ def pdb_report(asn):
 
     if config['debug']:
         tst = datetime.datetime.now().strftime(config['timestamp_format'])
-        rdb.lpush('pdb_log', tst + ' > Generating for AS %s gauge graph with percentage of IPv4 and IPv6 peering' % (asn))
-        print tst + ' > Generating for AS %s gauge graph with percentage of IPv4 and IPv6 peering' % (asn)
+        rdb.lpush('pdb_log', '%s > Generating for AS %s gauge graph with percentage of IPv4 and IPv6 peering' % (tst, asn))
+        print '%s > Generating for AS %s gauge graph with percentage of IPv4 and IPv6 peering' % (tst, asn)
 
+    # Generating gauge graph with percentage of IPv4 and IPv6 peering's
     gauge_v46_url = 'static/as' + asn + '_v46.svg'
     gauge_v46 = pygal.SolidGauge(inner_radius=0.70, half_pie=True)
     gauge_v46.value_formatter = percent_formatter
+
+    # Checking if accounted total capacity > 0. Some ASNs do publish any details about public peerings
     if total_peering > 0:
         gauge_v46.add('IPv4', [{'value': 100 * total_peering_v4 / total_peering, 'max_value': 100}])
         gauge_v46.add('IPv6', [{'value': 100 * total_peering_v6 / total_peering, 'max_value': 100}])
@@ -370,6 +410,7 @@ def pdb_report(asn):
         gauge_v46.add('IPv6', [{'value': 0, 'max_value': 100}])
     gauge_v46.render_to_file(gauge_v46_url)
 
+    # Rendering HTML template with the provided data
     pdb_report = render_template(
         'report.html',
         asn=asn,
@@ -388,8 +429,8 @@ def pdb_report(asn):
 
     if config['debug']:
         tst = datetime.datetime.now().strftime(config['timestamp_format'])
-        rdb.lpush('pdb_log', tst + ' > Report for AS %s has been generated' % (asn))
-        print tst + ' > Report for AS %s has been generated' % (asn)
+        rdb.lpush('pdb_log', '%s > Report for AS %s has been generated' % (tst, asn))
+        print '%s > Report for AS %s has been generated' % (tst, asn)
 
     return pdb_report
 
@@ -402,7 +443,7 @@ if __name__ == '__main__':
     def add_header(r):
         """
         Add headers to both force latest IE rendering engine or Chrome Frame,
-        and also to cache the rendered page for 10 minutes.
+        and also to do cache the rendered page.
         """
         r.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
         r.headers['Pragma'] = 'no-cache'
@@ -414,8 +455,8 @@ if __name__ == '__main__':
     def index():
         if config['debug']:
             tst = datetime.datetime.now().strftime(config['timestamp_format'])
-            rdb.lpush('pdb_log', tst + ' > Main page access from ' + request.remote_addr)
-            print tst + ' > Main page access from ' + request.remote_addr
+            rdb.lpush('pdb_log', '%s > Main page access from %s' % (tst, request.remote_addr))
+            print '%s > Main page access from %s' % (tst, request.remote_addr)
 
         return render_template('about.html', days=config['days'])
 
@@ -425,8 +466,8 @@ if __name__ == '__main__':
 
         if config['debug']:
             tst = datetime.datetime.now().strftime(config['timestamp_format'])
-            rdb.lpush('pdb_log', tst + ' > Redis DB has been flushed')
-            print tst + ' > Redis DB has been flushed'
+            rdb.lpush('pdb_log', '%s > Redis DB has been flushed' % (tst))
+            print '%s > Redis DB has been flushed' % (tst)
 
         return render_template('error.html', error='Redis DB has been flushed', message='')
 
@@ -434,8 +475,8 @@ if __name__ == '__main__':
     def eventlog():
         if config['debug']:
             tst = datetime.datetime.now().strftime(config['timestamp_format'])
-            rdb.lpush('pdb_log', tst + ' > Eventlog access from ' + request.remote_addr)
-            print tst + ' > Eventlog access from ' + request.remote_addr
+            rdb.lpush('pdb_log', '%s > Eventlog access from %s' % (tst, request.remote_addr))
+            print '%s > Eventlog access from %s' % (tst, request.remote_addr)
 
         return render_template('eventlog.html', error='Eventlog', eventlog_entries=config['eventlog_entries'])
 
@@ -450,8 +491,8 @@ if __name__ == '__main__':
         )
         if config['debug']:
             tst = datetime.datetime.now().strftime(config['timestamp_format'])
-            rdb.lpush('pdb_log', tst + ' > Eventlog Data access from ' + request.remote_addr)
-            print tst + ' > Eventlog Data access from ' + request.remote_addr
+            rdb.lpush('pdb_log', '%s > Eventlog Data access from %s' % (tst, request.remote_addr))
+            print '%s > Eventlog Data access from %s' % (tst, request.remote_addr)
         return response
 
     @app.route('/asn/<asn>/')
@@ -459,16 +500,16 @@ if __name__ == '__main__':
         if is_valid_asn(asn):
             if config['debug']:
                 tst = datetime.datetime.now().strftime(config['timestamp_format'])
-                rdb.lpush('pdb_log', tst + ' > PeeringDB Report access from ' + request.remote_addr + ' ASN ' + asn)
-                print tst + ' > PeeringDB Report access from ' + request.remote_addr + ' ASN ' + asn
+                rdb.lpush('pdb_log', '%s > PeeringDB Report access from %s ASN %s' % (tst, request.remote_addr, asn))
+                print '%s > PeeringDB Report access from %s ASN %s' % (tst, request.remote_addr, asn)
 
             report = pdb_report(asn)
             return report
         else:
             if config['debug']:
                 tst = datetime.datetime.now().strftime(config['timestamp_format'])
-                rdb.lpush('pdb_log', tst + ' > PeeringDB Report access from ' + request.remote_addr + ' invalid ASN ' + asn)
-                print tst + ' > PeeringDB Report access from ' + request.remote_addr + ' invalid ASN ' + asn
+                rdb.lpush('pdb_log', '%s > PeeringDB Report access from %s invalid ASN %s' % (tst, request.remote_addr, asn))
+                print '%s > PeeringDB Report access from %s invalid ASN %s' % (tst, request.remote_addr, asn)
 
             return render_template('error.html', error='Invalid ASN provided: ' + str(asn), message='ASNs are accepted only from the ranges 1-23455, 23457-64495 and 131072-397212')
 
