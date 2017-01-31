@@ -27,3 +27,6 @@ config['timestamp_format'] = '%Y-%m-%d %H:%M:%S %f'
 
 # Number of log entries displayed
 config['eventlog_entries'] = 100
+
+# Allow to flush Redis DB
+config['redis_flush_allowed'] = False
