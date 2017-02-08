@@ -1,4 +1,4 @@
-PeeringDB Report Generator
+Public Peering Report Generator
 ==========================
 <b>Description</b><br/>
 The tool utilizes <a href="https://peeringdb.com/apidocs/" target="_blank">PeeringDB API</a> to collect and analize details about requested ASN.

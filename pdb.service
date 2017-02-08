@@ -1,5 +1,5 @@
 [Unit]
-Description=PeeringDB Report Generator
+Description=Public Peering Report Generator
 
 [Service]
 ExecStart=/opt/pdb/pdb_report.py
