@@ -1,7 +1,7 @@
 Public Peering Report Generator
-==========================
+===============================
 <b>Description</b><br/>
-The tool utilizes <a href="https://peeringdb.com/apidocs/" target="_blank">PeeringDB API</a> to collect and analize details about requested ASN.
+The tool utilizes <a href="https://peeringdb.com/apidocs/" target="_blank">PeeringDB API</a> to collect and analyze details about requested ASN.
 The generated report includes:
 - Total number of peering points.
 - Total number of unique IXP operators/organizations.
