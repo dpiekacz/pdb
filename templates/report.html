@@ -12,10 +12,10 @@
     <embed width="800" type="image/svg+xml" src="{{ peering_v46|safe }}">
 </div>
 <div class="container-fluid" id="report" style="text-align:center;">
-<table class="table table-striped">
-  <thead>
+<table class="table">
+  <thead class="thead-dark">
   <tr>
-    <th colspan="2"><p style="font-size:150%;text-align:center;">Public peering grouped by IXP name</p><p style="text-align:center;">Added and Updated columns will be highlighted when have changed in the last {{ days }} days.</p></th>
+    <th scope="col" colspan="2"><p style="font-size:150%;text-align:center;">Public peering grouped by IXP name</p><p style="text-align:center;">Added and Updated columns will be highlighted when have changed in the last {{ days }} days.</p></th>
   </tr>
   </thead>
 
@@ -25,15 +25,15 @@
       <td style="width:10%;">{{ ixp[0] }}</td>
       <td style="width:90%;">
 
-    <table style="width:100%;" class="table table-striped">
-     <thead>
+    <table class="table">
+     <thead class="thead-dark">
      <tr>
-      <th style="width:10%;">Speed</th>
-      <th style="width:10%;">Route Server</th>
-      <th style="width:20%;">IPv4 address</th>
-      <th style="width:20%;">IPv6 address</th>
-      <th style="width:20%;">Added</th>
-      <th style="width:20%;">Updated</th>
+      <th scope="col" style="width:10%;">Speed</th>
+      <th scope="col" style="width:10%;">Route Server</th>
+      <th scope="col" style="width:20%;">IPv4 address</th>
+      <th scope="col" style="width:20%;">IPv6 address</th>
+      <th scope="col" style="width:20%;">Added</th>
+      <th scope="col" style="width:20%;">Updated</th>
      </tr>
      </thead>
      <tbody>
@@ -43,8 +43,8 @@
       <td>{{ ixp[1][peering].rs }}</td>
       <td>{{ ixp[1][peering].ip4 }}</td>
       <td>{{ ixp[1][peering].ip6 }}</td>
-      <td {% if ixp[1][peering].created_warn %}class="warning"{% endif %}>{{ ixp[1][peering].created }}</td>
-      <td {% if ixp[1][peering].updated_warn %}class="info"{% endif %}>{{ ixp[1][peering].updated }}</td>
+      <td {% if ixp[1][peering].created_warn %}class="table-warning"{% endif %}>{{ ixp[1][peering].created }}</td>
+      <td {% if ixp[1][peering].updated_warn %}class="table-info"{% endif %}>{{ ixp[1][peering].updated }}</td>
      </tr>
      {% endfor %}
      </tbody>
