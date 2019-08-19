@@ -39,12 +39,12 @@ Valid <b>_ASN_</b> ranges are 1-23455, 23457-64495 and 131072-397212.
 - <a href="https://pdb.gixtools.net/asn/6939/" target="_blank">Report about Hurricane Electric</a>
 
 <b>Requirements</b><br/>
-- No OS specific features are used, code is developed and tested on Ubuntu 16.04.1 LTS (xenial)
-- Python 2.x, tested with 2.7.12
+- No OS specific features are used, code is developed and tested on Ubuntu 18.04 LTS (bionic)
+- Python 3.x (tested with 3.6.8)
 - Python libraries:
  - redis
  - peeringdb
  - flask
  - pygal
  - pygal_maps_world
-- Redis DB, tested with 3.0.6
+- Redis DB

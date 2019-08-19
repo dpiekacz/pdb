@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 pdb_report.py
 Created by Daniel Piekacz on 2017-01-25.
@@ -10,6 +10,8 @@ import datetime
 import ssl
 import redis
 import json
+import os.path
+import multiprocessing
 
 import pygal
 import pygal_maps_world
@@ -34,7 +36,7 @@ def is_valid_asn(s):
 
 
 def percent_formatter(x):
-    return '{:.10g}%'.format(x)
+    return '{:,.10g}%'.format(x)
 
 
 def capacity_gb_formatter(x):
@@ -48,13 +50,13 @@ def capacity_tb_formatter(x):
 def log(rdb, message, data):
     if config['debug']:
         tst = datetime.datetime.now().strftime(config['timestamp_format'])
-        rdb.lpush('pdb_log', tst + ' > ' + message % (data))
-        print tst + ' > ' + message % (data)
+        # rdb.lpush('pdb_log', tst + ' > ' + message % (data))
+        # print tst + ' > ' + message % (data)
 
 
 def pdb_report(asn):
     pdb = PeeringDB()
-    rdb = redis.Redis()
+    rdb = redis.Redis(host='db01.gix', port=6379, db=9)
 
     total_peering = 0
     total_peering_v4 = 0
@@ -89,12 +91,12 @@ def pdb_report(asn):
         except:
             return render_template('error.html', error='No entry in PeeringDB for ASN ' + str(asn), message='That AS operator has not published details yet :(')
         else:
-            rdb.set('as_' + str(asn), json.dumps(asn_info))
+            rdb.set('as_' + str(asn), json.dumps(asn_info), ex=604800)
 
     else:
         # ASN is cached
         log(rdb, 'ASN %s is cached', (asn))
-        asn_info = json.loads(asn_info)
+        asn_info = json.loads(asn_info.decode())
 
     log(rdb, '%s - ASN %s', (asn_info['name'], asn_info['asn']))
 
@@ -122,11 +124,11 @@ def pdb_report(asn):
             # Querying PeeringDB for IX
             log(rdb, 'Querying PeeringDB for IX ID %s', (peering['ix_id']))
             ix_info = pdb.all('ix', id=peering['ix_id'], depth=2)[0]
-            rdb.set('ix_' + str(peering['ix_id']), json.dumps(ix_info))
+            rdb.set('ix_' + str(peering['ix_id']), json.dumps(ix_info), ex=604800)
         else:
             # IX is cached
             log(rdb, 'IX %s is cached', (peering['ix_id']))
-            ix_info = json.loads(ix_info)
+            ix_info = json.loads(ix_info.decode())
 
         # Generating stats for IXLAN
         if peering['ixlan_id'] in peering_ixlan:
@@ -144,11 +146,11 @@ def pdb_report(asn):
                 # Querying PeeringDB for IXLAN
                 log(rdb, 'Querying PeeringDB for IXLAN ID %s', (peering['ixlan_id']))
                 ixlan_info = pdb.all('ixlan', id=peering['ixlan_id'], depth=2)[0]
-                rdb.set('ixlan_' + str(peering['ixlan_id']), json.dumps(ixlan_info))
+                rdb.set('ixlan_' + str(peering['ixlan_id']), json.dumps(ixlan_info), ex=604800)
             else:
                 # IXLAN is cached
                 log(rdb, 'IXLAN %s is cached', (peering['ixlan_id']))
-                ixlan_info = json.loads(ixlan_info)
+                ixlan_info = json.loads(ixlan_info.decode())
 
             log(rdb, 'Generating stats for IXLAN %s', (peering['ixlan_id']))
 
@@ -190,11 +192,11 @@ def pdb_report(asn):
                         # Querying PeeringDB for ASN
                         log(rdb, 'Querying PeeringDB for ASN %s', (isp['asn']))
                         isp_info = pdb.all('net', asn=isp['asn'], depth=2)[0]
-                        rdb.set('as_' + str(isp['asn']), json.dumps(isp_info))
+                        rdb.set('as_' + str(isp['asn']), json.dumps(isp_info), ex=604800)
                     else:
                         # ASN is cached
                         log(rdb, 'ASN %s is cached', (isp['asn']))
-                        isp_info = json.loads(isp_info)
+                        isp_info = json.loads(isp_info.decode())
 
                     # Accounting total capacity connected to IXLAN grouped by type of member
                     for isp_netixlan_info in isp_info['netixlan_set']:
@@ -290,25 +292,27 @@ def pdb_report(asn):
 
         # Generating chart showing number of members grouped by network type
         pie_chart_number_url = 'static/ixlan_' + str(ix) + '_number.svg'
-        pie_chart_number = pygal.Bar()
-        pie_chart_number.title = 'Network types at ' + peering_ixlan[ix]['name'] + ' [%]\n Total number of unique members: ' + str(total_number_of_members)
-        pie_chart_number.value_formatter = percent_formatter
-        pie_chart_number.add('NSP/ISP', 100 * peering_ixlan[ix]['peer_transit_access'] / total_number_of_members)
-        pie_chart_number.add('Content', 100 * peering_ixlan[ix]['peer_content'] / total_number_of_members)
-        pie_chart_number.add('Enterprise', 100 * peering_ixlan[ix]['peer_enterprise'] / total_number_of_members)
-        pie_chart_number.add('Other', 100 * peering_ixlan[ix]['peer_other'] / total_number_of_members)
-        pie_chart_number.render_to_file(pie_chart_number_url)
+        if not os.path.isfile(pie_chart_number_url):
+            pie_chart_number = pygal.Bar(print_values=True)
+            pie_chart_number.title = 'Network types at ' + peering_ixlan[ix]['name'] + ' [%]\n Total number of unique members: ' + str(total_number_of_members)
+            pie_chart_number.value_formatter = percent_formatter
+            pie_chart_number.add('NSP/ISP', 100 * peering_ixlan[ix]['peer_transit_access'] / total_number_of_members)
+            pie_chart_number.add('Content', 100 * peering_ixlan[ix]['peer_content'] / total_number_of_members)
+            pie_chart_number.add('Enterprise', 100 * peering_ixlan[ix]['peer_enterprise'] / total_number_of_members)
+            pie_chart_number.add('Other', 100 * peering_ixlan[ix]['peer_other'] / total_number_of_members)
+            pie_chart_number.render_to_file(pie_chart_number_url)
 
         # Generating chart showing total capacity grouped by network type
         pie_chart_capacity_url = 'static/ixlan_' + str(ix) + '_capacity.svg'
-        pie_chart_capacity = pygal.Bar()
-        pie_chart_capacity.value_formatter = capacity_gb_formatter
-        pie_chart_capacity.title = 'Networt types at ' + peering_ixlan[ix]['name'] + ' [Gb]\n Total capacity of members: ' + capacity_gb_formatter(total_capacity_of_members / 1000)
-        pie_chart_capacity.add('NSP/ISP', peering_ixlan[ix]['capacity_transit_access'] / 1000)
-        pie_chart_capacity.add('Content', peering_ixlan[ix]['capacity_content'] / 1000)
-        pie_chart_capacity.add('Enterprise', peering_ixlan[ix]['capacity_enterprise'] / 1000)
-        pie_chart_capacity.add('Other', peering_ixlan[ix]['capacity_other'] / 1000)
-        pie_chart_capacity.render_to_file(pie_chart_capacity_url)
+        if not os.path.isfile(pie_chart_capacity_url):
+            pie_chart_capacity = pygal.Bar(print_values=True)
+            pie_chart_capacity.value_formatter = capacity_gb_formatter
+            pie_chart_capacity.title = 'Networt types at ' + peering_ixlan[ix]['name'] + ' [Gb]\n Total capacity of members: ' + capacity_gb_formatter(total_capacity_of_members / 1000)
+            pie_chart_capacity.add('NSP/ISP', peering_ixlan[ix]['capacity_transit_access'] / 1000)
+            pie_chart_capacity.add('Content', peering_ixlan[ix]['capacity_content'] / 1000)
+            pie_chart_capacity.add('Enterprise', peering_ixlan[ix]['capacity_enterprise'] / 1000)
+            pie_chart_capacity.add('Other', peering_ixlan[ix]['capacity_other'] / 1000)
+            pie_chart_capacity.render_to_file(pie_chart_capacity_url)
 
     # Calculating total number of unique peering operators and total capacity in Gb & Tb
     total_unique_org = len(peering_org)
@@ -321,34 +325,37 @@ def pdb_report(asn):
     # Generating world map with number and location of peering's
     log(rdb, 'Generating world map for AS %s with number of peering locations', (asn))
     map_number_url = 'static/as' + asn + '_map_number.svg'
-    map_number = pygal.maps.world.World()
-    map_number.title = 'World map with number of peering locations'
-    map_number.add('Peerings', peering_map)
-    map_number.render_to_file(map_number_url)
+    if not os.path.isfile(map_number_url):
+        map_number = pygal.maps.world.World(print_values=True)
+        map_number.title = 'World map with number of peering locations'
+        map_number.add('Peerings', peering_map)
+        map_number.render_to_file(map_number_url)
 
     # Generating world map with total capacity of peering's
     log(rdb, 'Generating world map for AS %s with total capacity', (asn))
     map_capacity_url = 'static/as' + asn + '_map_capacity.svg'
-    map_capacity = pygal.maps.world.World()
-    map_capacity.title = 'World map with total capacity'
-    map_capacity.value_formatter = capacity_gb_formatter
-    map_capacity.add('Capacity', peering_map_capacity)
-    map_capacity.render_to_file(map_capacity_url)
+    if not os.path.isfile(map_capacity_url):
+        map_capacity = pygal.maps.world.World(print_values=True)
+        map_capacity.title = 'World map with total capacity'
+        map_capacity.value_formatter = capacity_gb_formatter
+        map_capacity.add('Capacity', peering_map_capacity)
+        map_capacity.render_to_file(map_capacity_url)
 
     # Generating gauge graph with percentage of IPv4 and IPv6 peering's
     log(rdb, 'Generating gauge graph with percentage of IPv4 and IPv6 peering for AS %s', (asn))
     gauge_v46_url = 'static/as' + asn + '_v46.svg'
-    gauge_v46 = pygal.SolidGauge(inner_radius=0.70, half_pie=True)
-    gauge_v46.value_formatter = percent_formatter
+    if not os.path.isfile(gauge_v46_url):
+        gauge_v46 = pygal.SolidGauge(inner_radius=0.70, half_pie=True, print_values=True)
+        gauge_v46.value_formatter = percent_formatter
 
-    # Checking if accounted total capacity > 0. Some ASNs do publish any details about public peerings
-    if total_peering > 0:
-        gauge_v46.add('IPv4', [{'value': 100 * total_peering_v4 / total_peering, 'max_value': 100}])
-        gauge_v46.add('IPv6', [{'value': 100 * total_peering_v6 / total_peering, 'max_value': 100}])
-    else:
-        gauge_v46.add('IPv4', [{'value': 0, 'max_value': 100}])
-        gauge_v46.add('IPv6', [{'value': 0, 'max_value': 100}])
-    gauge_v46.render_to_file(gauge_v46_url)
+        # Checking if accounted total capacity > 0. Some ASNs do publish any details about public peerings
+        if total_peering > 0:
+            gauge_v46.add('IPv4', [{'value': 100 * total_peering_v4 / total_peering, 'max_value': 100}])
+            gauge_v46.add('IPv6', [{'value': 100 * total_peering_v6 / total_peering, 'max_value': 100}])
+        else:
+            gauge_v46.add('IPv4', [{'value': 0, 'max_value': 100}])
+            gauge_v46.add('IPv6', [{'value': 0, 'max_value': 100}])
+        gauge_v46.render_to_file(gauge_v46_url)
 
     # Rendering HTML template with the provided data
     log(rdb, 'Rendering HTML template with report for AS %s', (asn))
@@ -373,26 +380,17 @@ def pdb_report(asn):
     return pdb_report
 
 
-if __name__ == '__main__':
-    app = Flask(__name__)
-    rdb = redis.Redis()
-
-    @app.after_request
-    def add_header(r):
-        """
-        Add headers to both force latest IE rendering engine or Chrome Frame,
-        and also to do cache the rendered page.
-        """
-        r.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        r.headers['Pragma'] = 'no-cache'
-        r.headers['Expires'] = '0'
-        r.headers['Cache-Control'] = 'public, max-age=0'
-
-        return r
+def pdb(num):
+    app = Flask(__name__, static_url_path='/static')
+    rdb = redis.Redis(host='db01.gix', port=6379, db=9)
 
     @app.route('/')
     def index():
         log(rdb, 'Main page access from %s', (request.remote_addr))
+        # log(rdb, 'Main Index %s', (request.headers['Cf-Connecting-Ip']))
+        # if 'HTTP_CF_CONNECTING_IP' in request.headers.keys():
+        #    print ('Main page access from %s', (request.headers['HTTP_CF_CONNECTING_IP']))
+        #    log(rdb, 'Main page access from %s', (request.headers['HTTP_CF_CONNECTING_IP']))
 
         return render_template('about.html', days=config['days'])
 
@@ -406,26 +404,26 @@ if __name__ == '__main__':
             log(rdb, 'Redis DB flush disabled %s', (request.remote_addr))
             return render_template('error.html', error='Redis DB flush disabled', message='')
 
-    @app.route('/pdb-eventlog/')
-    def eventlog():
-        log(rdb, 'Eventlog request from %s', (request.remote_addr))
+    # @app.route('/pdb-eventlog/')
+    # def eventlog():
+    #     log(rdb, 'Eventlog request from %s', (request.remote_addr))
 
-        return render_template('eventlog.html', error='Eventlog', eventlog_entries=config['eventlog_entries'])
+    #    return render_template('eventlog.html', error='Eventlog', eventlog_entries=config['eventlog_entries'])
 
-    @app.route('/pdb-eventlog-data/')
-    def eventlog_data():
-        log(rdb, 'Eventlog Data request from %s', (request.remote_addr))
+    # @app.route('/pdb-eventlog-data/')
+    # def eventlog_data():
+    #     log(rdb, 'Eventlog Data request from %s', (request.remote_addr))
 
-        log(rdb, 'Pulling %s log records from Redis DB', (config['eventlog_entries']))
-        logs = rdb.lrange('pdb_log', 0, config['eventlog_entries'])
+    #     log(rdb, 'Pulling %s log records from Redis DB', (config['eventlog_entries']))
+    #     logs = rdb.lrange('pdb_log', 0, config['eventlog_entries'])
 
-        response = app.response_class(
-            response=json.dumps(logs),
-            status=200,
-            mimetype='application/json'
-        )
+    #     response = app.response_class(
+    #         response=json.dumps(logs),
+    #         status=200,
+    #         mimetype='application/json'
+    #     )
 
-        return response
+    #     return response
 
     @app.route('/asn/<asn>/')
     def asn(asn=''):
@@ -440,12 +438,23 @@ if __name__ == '__main__':
 
             return render_template('error.html', error='Invalid ASN provided: ' + str(asn), message='ASNs are accepted only from the ranges 1-23455, 23457-64495 and 131072-397212')
 
-    context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-    context.load_cert_chain(config['ssl_crt'], config['ssl_key'])
-    context.set_ciphers('EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH:ECDHE-ECDSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA')
-    context.options |= ssl.OP_NO_SSLv2
-    context.options |= ssl.OP_NO_SSLv3
-    context.options |= ssl.OP_CIPHER_SERVER_PREFERENCE
-    context.options |= ssl.OP_NO_COMPRESSION
+    if config['ssl']:
+        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        context.load_cert_chain(config['ssl_crt'], config['ssl_key'])
+        context.set_ciphers('EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH:ECDHE-ECDSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA')
+        context.options |= ssl.OP_NO_SSLv2
+        context.options |= ssl.OP_NO_SSLv3
+        context.options |= ssl.OP_CIPHER_SERVER_PREFERENCE
+        context.options |= ssl.OP_NO_COMPRESSION
 
-    app.run(debug=config['debug'], host=config['http_ip'], port=config['http_port'], ssl_context=context, threaded=True)
+        app.run(debug=config['debug'], host=config['http_ip'], port=config['https_port'] + num, ssl_context=context, threaded=True)
+    else:
+        app.run(debug=config['debug'], host=config['http_ip'], port=config['http_port'] + num, threaded=True)
+
+
+if __name__ == '__main__':
+    jobs = []
+    for i in range(3):
+        p = multiprocessing.Process(target=pdb, args=(i,))
+        jobs.append(p)
+        p.start()
