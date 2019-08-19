@@ -42,9 +42,9 @@ Valid <b>_ASN_</b> ranges are 1-23455, 23457-64495 and 131072-397212.
 - No OS specific features are used, code is developed and tested on Ubuntu 18.04 LTS (bionic)
 - Python 3.x (tested with 3.6.8)
 - Python libraries:
- - redis
- - peeringdb
- - flask
- - pygal
- - pygal_maps_world
+  - redis
+  - peeringdb
+  - flask
+  - pygal
+  - pygal_maps_world
 - Redis DB
