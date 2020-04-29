@@ -13,11 +13,17 @@ config = {}
 config['days'] = 60
 
 # Web server IP address and port
-config['http_ip'] = '::'
-config['http_port'] = 443
+config['http_ip'] = '0.0.0.0'
+config['http_port'] = 5000
 
+config['ssl'] = False
 config['ssl_crt'] = '/etc/letsencrypt/live/pdb.gixtools.net/fullchain.pem'
 config['ssl_key'] = '/etc/letsencrypt/live/pdb.gixtools.net/privkey.pem'
+
+# Redis
+config['redis_host'] = 'localhost'
+config['redis_port'] = 6379
+config['redis_db'] = 0
 
 # Logging and debugging.
 config['debug'] = True

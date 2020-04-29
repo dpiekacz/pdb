@@ -56,7 +56,7 @@ def log(rdb, message, data):
 
 def pdb_report(asn):
     pdb = PeeringDB()
-    rdb = redis.Redis(host='db01.gix', port=6379, db=9)
+    rdb = redis.Redis(host=config['redis_host'], port=config['redis_port'], db=config['redis_db'])
 
     total_peering = 0
     total_peering_v4 = 0
@@ -382,7 +382,7 @@ def pdb_report(asn):
 
 def pdb(num):
     app = Flask(__name__, static_url_path='/static')
-    rdb = redis.Redis(host='db01.gix', port=6379, db=9)
+    rdb = redis.Redis(host=config['redis_host'], port=config['redis_port'], db=config['redis_db'])
 
     @app.route('/')
     def index():
@@ -454,7 +454,7 @@ def pdb(num):
 
 if __name__ == '__main__':
     jobs = []
-    for i in range(3):
+    for i in range(1):
         p = multiprocessing.Process(target=pdb, args=(i,))
         jobs.append(p)
         p.start()

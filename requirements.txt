@@ -1,0 +1,5 @@
+redis
+flask==1.1.1
+pygal
+pygal_maps_world
+peeringdb==0.6.1
