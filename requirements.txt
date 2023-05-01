@@ -1,5 +1,5 @@
 redis
-flask==1.1.1
+flask==2.3.2
 pygal
 pygal_maps_world
 peeringdb==0.6.1
